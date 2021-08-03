@@ -1,0 +1,88 @@
+Processing:D:\Code\zea-cad-testing\data\Hospital Model\IFC\Autodesk_Hospital_Plumbing.ifc to:D:\Code\zea-engine\testing-e2e\data\Hospital\Autodesk_Hospital_Plumbing.zcad
+PROGRESS: { "percentage": 10, "label": "Parsing", "indicatorColor": "#b20000" }
+Loading file D:\Code\zea-cad-testing\data\Hospital Model\IFC\Autodesk_Hospital_Plumbing.ifc
+File Extension: .ifc
+Traversing file structure
+ElementCount AsmCount:8284 InstanceCount:16100 InstancedAsmCount:0 PartCount:7817
+PROGRESS: { "percentage": 21, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 22, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 23, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 24, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 25, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 26, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 27, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 28, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 29, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 30, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 31, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 32, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 33, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 34, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 35, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 36, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 37, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 38, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 39, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 40, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 41, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 42, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 43, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 44, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 45, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 46, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 47, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 48, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 49, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 50, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 51, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 52, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 53, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 54, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 55, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 56, "label": "Parsing", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 57, "label": "Parsing", "indicatorColor": "#b20000" }
+Traversing file structure - Done
+PROGRESS: { "percentage": 100, "label": "Loading Done", "indicatorColor": "#b20000" }
+PROGRESS: { "percentage": 10, "label": "Writing", "indicatorColor": "#b20000" }
+CADAsset::exportBinary:3.5.0 : NONE
+==================================
+MaterialLibrary.exportBinary
+Num Materials:8
+materialsDiscarded:112
+==================================
+totalGeoms:3895
+geomsDiscarded:1356
+geomsKept:2539
+----------------------------------
+polysDiscarded:83461
+polysKept:231712
+totalPolys:315173
+==================================
+Acceleration:
+Lookup :1 Count:0
+Lookup :2 Count:0
+Lookup :4 Count:0
+Lookup :8 Count:0
+Lookup :16 Count:1167
+Lookup :32 Count:1213
+Lookup :64 Count:16
+Lookup :128 Count:41
+Lookup :256 Count:58
+Lookup :512 Count:17
+Lookup :1024 Count:7
+Lookup :2048 Count:14
+Lookup :4096 Count:5
+Lookup :8192 Count:0
+Lookup :16384 Count:1
+==================================
+PROGRESS: { "percentage": 100, "label": "Writing", "indicatorColor": "#b20000" }
+==================================
+Summary
+numTreeItems:7826
+numXRefs:0
+numGeomItems:3895
+==================================
+
+D:\Code\zea-cad-server\tools\build\Release\ProcessCADFile.exe (process 16820) exited with code 0.
+To automatically close the console when debugging stops, enable Tools->Options->Debugging->Automatically close the console when debugging stops.
+Press any key to close this window . . .
