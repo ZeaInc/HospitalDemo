@@ -23,7 +23,9 @@ export class CullStats extends HTMLElement {
 
   set renderer(renderer) {
     renderer.on('CullingUpdated', (event) => {
-      this.div.textContent = `visible: ${event.visible} / total: ${event.total}`
+      if (event && event.visible != undefined && event.total != undefined) {
+        this.div.textContent = `visible: ${event.visible} / total: ${event.total}`
+      }
     })
   }
 }

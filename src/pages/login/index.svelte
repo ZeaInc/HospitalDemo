@@ -12,13 +12,14 @@
   let shouldShowLayout
   let submitted
   let usernameEl
-  const getRandomRoomId = ()=>{
+  const getRandomRoomId = () => {
     return `${getRandomString(3)}-${getRandomString(3)}-${getRandomString(3)}`
   }
-  let roomId = urlParams.has('roomId') ? urlParams.get('roomId') : getRandomRoomId()
+  let roomId = urlParams.has('roomId')
+    ? urlParams.get('roomId')
+    : getRandomRoomId()
 
   const formFields = {
-    password: '',
     username: '',
     roomId,
   }
@@ -64,10 +65,8 @@
       firstName: formFields.username,
       id: userId,
       lastName: '',
-      password: formFields.password,
-      username: formFields.username
+      username: formFields.username,
     }
-
 
     try {
       await auth.setUserData(userData)
@@ -81,7 +80,7 @@
   }
 
   onMount(async () => {
-    const isAuthenticated = await auth.isAuthenticated()
+    const isAuthenticated = true //await auth.isAuthenticated()
 
     if (isAuthenticated && (!collabEnabled || urlParams.get('roomId'))) {
       redirectToMain()
@@ -106,16 +105,18 @@
     class="bg-background min-h-full flex items-center justify-center py-12 px-4 text-foreground sm:px-6 lg:px-8"
   >
     <div class="max-w-md w-full space-y-8">
-      <h2 class="mt-6 text-center text-3xl font-extrabold">Zea Svelte Template</h2>
-      <p class="mt-6 text-center">This is an MIT open sourced template application that can be used to build your own custom applications.</p>
+      <h2 class="mt-6 text-center text-3xl font-extrabold">Hosptial Demo</h2>
+      <p class="mt-6 text-center">
+        This sample show loading a large and complex BIM model, while supporting
+        collaborative users and VR.
+      </p>
 
       <form
         class="mt-8 space-y-6"
         on:submit|preventDefault|stopPropagation={handleSubmit}
       >
         <div class="rounded-md shadow-sm">
-          <p class="mt-6 text-center">Enter a username and the password to start the app.</p>
-          <p class="text-center">Note: the defualt password is 'zea' and can be modified in 'auth.js' or you can integrate an authentication service like Auth0.</p>
+          <p class="mt-6 text-center">Enter a username to start the app.</p>
           <div class="mb-2">
             <input
               autocomplete="off"
@@ -129,21 +130,12 @@
             />
           </div>
 
-          <div class="mb-2">
-            <input
-              autocomplete="off"
-              bind:value={formFields.password}
-              class="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-yellow-500 focus:border-yellow-500 focus:z-10 sm:text-sm"
-              name="password"
-              placeholder="Password (zea)"
-              required
-              type="password"
-            />
-          </div>
-
           {#if collabEnabled}
             <div class="mb-2">
-              <p class="mt-6 text-center">The roomId allows other users to join you in a collaborative session.</p>
+              <p class="mt-6 text-center">
+                The roomId allows other users to join you in a collaborative
+                session.
+              </p>
               <input
                 autocomplete="off"
                 bind:value={formFields.roomId}
