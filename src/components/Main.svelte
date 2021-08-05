@@ -108,6 +108,7 @@
       res = loadGLTFAsset(url, filename)
     } else if (filename.endsWith('json')) {
       loadProductStructure(url, filename).then((root) => {
+        console.log('Done Tree')
         $assets.addChild(root)
       })
     }
@@ -147,10 +148,6 @@
       .getParameter('BackgroundColor')
       .setValue(new Color(0.85, 0.85, 0.85, 1))
     renderer.setScene($scene)
-
-    // renderer.on('CullingUpdated', (event) => {
-    //   console.log(`visible: ${event.visible} / total: ${event.total} `)
-    // })
 
     appData.renderer = renderer
     appData.scene = $scene
@@ -232,6 +229,9 @@
 
     renderer.getViewport().on('pointerDown', (event) => {
       if (isMenuVisible) closeMenu()
+      if (event.intersectionData) {
+        console.log(event.intersectionData.geomItem.getPath())
+      }
       if (event.pointerType == 'touch' && event.intersectionData) {
         const item = filterItemSelection(event.intersectionData.geomItem)
         startLongTouchTimer(event, item)
@@ -319,6 +319,59 @@
         const assetUrl = urlParams.get('prdStruct')
         loadProductStructure(assetUrl, assetUrl).then((root) => {
           $assets.addChild(root)
+        })
+        fileLoaded = true
+      } else {
+        const assetUrl = 'data/Hospital/productStructure.json'
+        loadProductStructure(assetUrl, assetUrl).then((root) => {
+          $assets.addChild(root)
+          root.on('loaded', (event) => {
+            console.log('Done:', event.InstanceName)
+            if (event.name == 'Architectural') {
+              const Ribs = root.resolvePath([
+                'Hospital',
+                'Architectural',
+                'Assembly_0',
+                'Default',
+                'Instance_0',
+                'Level 1',
+                'Option 2 - Ribs Faceted:Option 2 - Ribs Faceted:187261',
+              ])
+              if (Ribs) {
+                Ribs.setVisible(false)
+              }
+
+              ;[
+                ['Level 3', 'Stair:7" max riser 11" tread:187507:2'],
+                ['Level 4', 'Stair:7" max riser 11" tread:187507:3'],
+                ['Level 3', 'Stair:7" max riser 11" tread:189108:2'],
+                ['Level 4', 'Stair:7" max riser 11" tread:189108:3'],
+                ['Level 3', 'Stair:7" max riser 11" tread:190846:2'],
+                ['Level 3', 'Stair:7" max riser 11" tread:195889:2'],
+                ['Level 4', 'Stair:7" max riser 11" tread:195889:3'],
+                ['Level 5', 'Stair:7" max riser 11" tread:195889:4'],
+                ['Level 3', 'Stair:7" max riser 11" tread:190278:2'],
+                ['Level 4', 'Stair:7" max riser 11" tread:190278:3'],
+                ['Level 3', 'Stair:7" max riser 11" tread:189710:2'],
+                ['Level 4', 'Stair:7" max riser 11" tread:189710:3'],
+                ['Level 5', 'Stair:7" max riser 11" tread:189710:4'],
+              ].forEach((subpath) => {
+                const path = [
+                  'Hospital',
+                  'Architectural',
+                  'Assembly_0',
+                  'Default',
+                  'Instance_0',
+                  subpath[0],
+                  subpath[1],
+                ]
+                const Stairs = root.resolvePath(path)
+                if (Stairs) {
+                  Stairs.setVisible(false)
+                }
+              })
+            }
+          })
         })
         fileLoaded = true
       }

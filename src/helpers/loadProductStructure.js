@@ -16,24 +16,32 @@ export default async function loadProductStructure(url, filename) {
       : ''
 
   const stem = filename.substring(0, filename.lastIndexOf('.'))
+  const promisses = []
   const references = {}
 
   const parseReferenceList = (json) => {
     json.forEach((refJson) => parseReference(refJson))
   }
   const loadReference = (reference) => {
-    reference.asset.load(reference.url).then(() => {
-      console.log('Done:', reference.Name)
-      const materials = reference.asset.getMaterialLibrary().getMaterials()
-      materials.forEach((material) => {
-        if (material.getShaderName() == 'StandardSurfaceShader') {
-          material.setShaderName('SimpleSurfaceShader')
-          const baseColorParam = material.getParameter('BaseColor')
-          if (baseColorParam) {
-            baseColorParam.setValue(baseColorParam.getValue().toGamma())
-          }
+    return new Promise((resolve, reject) => {
+      reference.asset.load(reference.url).then(
+        () => {
+          const materials = reference.asset.getMaterialLibrary().getMaterials()
+          materials.forEach((material) => {
+            if (material.getShaderName() == 'StandardSurfaceShader') {
+              material.setShaderName('SimpleSurfaceShader')
+              const baseColorParam = material.getParameter('BaseColor')
+              if (baseColorParam) {
+                baseColorParam.setValue(baseColorParam.getValue().toGamma())
+              }
+            }
+          })
+          resolve()
+        },
+        () => {
+          reject()
         }
-      })
+      )
     })
   }
   const parseReference = (json) => {
@@ -53,12 +61,24 @@ export default async function loadProductStructure(url, filename) {
       const reference = references[json.Reference]
       const asset = reference.asset
       if (reference.refs == 0) {
-        loadReference(reference)
+        loadReference(reference).then(() => {
+          root.emit('loaded', {
+            treeItem,
+            ReferenceName: reference.Name,
+            name: json.InstanceName,
+          })
+        })
         treeItem = asset
       } else {
         // After the first reference, we clone.
         // Note: this is a shallow clone and all the geometry data will be shared(instanced)
         treeItem = asset.clone()
+
+        root.emit('loaded', {
+          treeItem,
+          ReferenceName: reference.Name,
+          name: json.InstanceName,
+        })
       }
       treeItem.setName(json.InstanceName)
       reference.refs++
@@ -117,7 +137,9 @@ export default async function loadProductStructure(url, filename) {
 
   const root = parseTreeItem(json['Root'])
 
-  resourceLoader.incrementWorkDone(1) // parse complete
+  Promise.all(promisses).then(() => {
+    resourceLoader.incrementWorkDone(1) // parse complete
+  })
 
   return root
 }
