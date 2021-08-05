@@ -37,42 +37,40 @@ class VRUI extends HTMLElement {
       img.src = icon
       buttonDiv.appendChild(img)
     }
-    addButton('data/dustin-w-Undo-icon.png', () => {
+    addButton('images/dustin-w-Undo-icon.png', () => {
       const { UndoRedoManager } = window.zeaUx
       UndoRedoManager.getInstance().undo()
     })
-    addButton('data/dustin-w-Redo-icon.png', () => {
+    addButton('images/dustin-w-Redo-icon.png', () => {
       const { UndoRedoManager } = window.zeaUx
       UndoRedoManager.getInstance().redo()
     })
 
     // let recording = false
-    // addButton('data/record-button-off.png', (img) => {
+    // addButton('images/record-button-off.png', (img) => {
     //   if (!recording) {
-    //     img.src = 'data/record-button-on.png'
+    //     img.src = 'images/record-button-on.png'
     //     this.sessionRecorder.startRecording()
     //     recording = true
     //   } else {
-    //     img.src = 'data/record-button-off.png'
+    //     img.src = 'images/record-button-off.png'
     //     this.sessionRecorder.stopRecording()
     //     recording = false
     //   }
     // })
-    addButton('data/view_1_1.png', (img) => {
+    addButton('images/view_1_1.png', (img) => {
       this.renderer.getXRViewport().then((xrvp) => {
         const { Ray, Xfo, Vec3 } = window.zeaEngine
         const stageXfo = xrvp.getXfo()
+        const stageScale = stageXfo.sc.z
         const headLocalXfo = xrvp.getVRHead().getXfo()
         const headXfo = xrvp
           .getVRHead()
           .getTreeItem()
           .getParameter('GlobalXfo')
           .getValue()
-        // const curreHeadHeight = stageXfo.tr.z + stageXfo.sc.z * 1.7
-        // stageXfo.tr.z = curreHeadHeight - 1.7
-        // const curreHeadPos = stageXfo.tr.add(new Vec3(0, 0, 1.7 * stageXfo.sc.z))
+
         stageXfo.sc.set(1, 1, 1)
-        // const delta = stageXfo.multiply(headLocalXfo).tr.subtract(headXfo.tr)
         const delta = headXfo.tr.subtract(stageXfo.multiply(headLocalXfo).tr)
         stageXfo.tr.addInPlace(delta)
 
@@ -80,7 +78,7 @@ class VRUI extends HTMLElement {
         const ray = new Ray()
         ray.start = headXfo.tr
         ray.dir.set(0, 0, -1)
-        const dist = 10
+        const dist = 20 * stageScale
         const area = 0.5
         const rayXfo = new Xfo()
         rayXfo.setLookAt(ray.start, ray.start.add(ray.dir), new Vec3(0, 0, 1))
@@ -88,6 +86,7 @@ class VRUI extends HTMLElement {
         const result = this.renderer.raycast(rayXfo, ray, dist, area)
         if (result) {
           const worldPos = ray.pointAtDist(result.dist)
+          console.log('raycast', stageScale, worldPos.z, stageXfo.tr.z)
           stageXfo.tr.z += worldPos.z - stageXfo.tr.z
         }
 
@@ -104,6 +103,7 @@ class VRUI extends HTMLElement {
   top: 0px;
   left: 0px;
   width: 320px;
+  z-index: 150;
 }
 
 .button {
@@ -228,8 +228,8 @@ class VRUI extends HTMLElement {
     //   if (key == 'VRHoldObjectsTool') continue
     //   addToolButton(key)
     // }
-    addToolButton('Freehand Line Tool', 'data/pen-tool.png')
-    addToolButton('VRHoldObjectsTool', 'data/grab-icon.png')
+    addToolButton('Freehand Line Tool', 'images/pen-tool.png')
+    addToolButton('VRHoldObjectsTool', 'images/grab-icon.png')
   }
   setSessionRecorder(sessionRecorder) {
     this.sessionRecorder = sessionRecorder
