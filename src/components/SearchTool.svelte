@@ -21,7 +21,7 @@
   const matchColor = new Color(1, 0, 0, 0.2)
 
   const doSearch = () => {
-    if ($scene) {
+    if ($scene && searchResultsEl) {
       while (searchResultsEl.firstChild) {
         searchResultsEl.removeChild(searchResultsEl.lastChild)
       }
