@@ -593,7 +593,14 @@
     <MenuOption
       text="Hide"
       on:click={() => {
-        contextItem.getParameter('Visible').setValue(false)
+        const visibleParam = contextItem.getParameter('Visible')
+
+        const change = new ParameterValueChange(visibleParam, false)
+
+        const undoRedoManager = UndoRedoManager.getInstance()
+        undoRedoManager.addChange(change)
+
+        // contextItem.getParameter('Visible').setValue(false)
       }}
     />
     <MenuOption
