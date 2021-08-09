@@ -3981,54 +3981,164 @@ void main(void) {
   }
 
   /**
-   * Class representing a VR controller UI.
-   * @extends GeomItem
+   * Traverse a dom tree and call a callback at each node.
+   * @param {HTMLElement} node
+   * @param {number} depth
+   * @param {function} func
    */
-  class VRControllerUI extends zeaEngine.GeomItem {
+  function traverse(node, depth, func) {
+    if (!func(node, depth)) return
+    node = node.firstChild;
+    while (node) {
+      traverse(node, depth + 1, func);
+      node = node.nextSibling;
+    }
+  }
+
+  /**
+   * Computes the size of th element, including margins.
+   * @param {HTMLElement} elem
+   * @return {object}
+   */
+  function elemSize(elem) {
+    const computedStyle = elem.computedStyleMap();
+    const elmWidth = computedStyle.get('width').value;
+    const elmMarginHorizontal = computedStyle.get('margin-left').value + computedStyle.get('margin-right').value;
+    const elmHeight = computedStyle.get('height').value;
+    const elmMarginVertical = computedStyle.get('margin-top').value + computedStyle.get('margin-bottom').value;
+    return {
+      width: elmWidth + elmMarginHorizontal,
+      height: elmHeight + elmMarginVertical,
+    }
+  }
+
+  const idx = 'data:image/svg+xml;charset=utf-8,<svg xmlns="http://www.w3.org/2000/svg"'.length;
+  const renderElementUI = (elem, size, key, callback) => {
+    domtoimage.toSvg(elem).then((uri) => {
+      // To work around a bug in domtoimage, we insert a viewBox into the SVG that ensures it renders
+      // all the way to the edges. otherwise, an image is generated that crops the left and bottom borders.
+      const uri2 = uri.substring(0, idx) + ` viewBox="0 0 ${size.width} ${size.height}"` + uri.substring(idx);
+      const image = new Image();
+      image.onload = function () {
+        callback(image, key);
+      };
+      // image.onerror = reject
+      image.src = uri2;
+    });
+  };
+  const plane = new zeaEngine.Plane(1, 1);
+
+  /**
+   * Class representing a VR controller UI.
+   * @extends TreeItem
+   */
+  class VRControllerUI extends zeaEngine.TreeItem {
     /**
      * Create a VR controller UI.
      * @param {any} appData - The appData value.
      * @param {any} vrUIDOMElement - The vrUIDOMElement value.
      */
     constructor(appData, vrUIDOMElement) {
-      const uimat = new zeaEngine.Material('vr-ui-mat', 'FlatSurfaceShader');
-
-      super('VRControllerUI', new zeaEngine.Plane(1, 1), uimat);
+      super('VRControllerUI');
 
       this.setSelectable(false);
       this.appData = appData;
       this.__vrUIDOMElement = vrUIDOMElement;
       this.__vrUIDOMElement.style.display = 'none';
 
-      this.__uiimage = new zeaEngine.DataImage();
-      // uimat.getParameter('BaseColor').setValue(new Color(0.3, 0.3, 0.3));
-      uimat.getParameter('BaseColor').setValue(this.__uiimage);
+      // const debugGeomItem = new GeomItem('Debug', new Plane(1, 1), new Material('debug-ui-mat', 'FlatSurfaceShader'))
+      // // Flip it over so we see the front.
+      // const debugGeomItemXfo = new Xfo()
+      // debugGeomItemXfo.ori.setFromAxisAndAngle(new Vec3(0, 1, 0), Math.PI)
+      // this.addChild(debugGeomItem, false)
 
-      this.__uiGeomOffsetXfo = new zeaEngine.Xfo();
-      this.__uiGeomOffsetXfo.sc.set(0, 0, 1);
-      this.__rect = { width: 0, height: 0 };
+      const uiOffset = new zeaEngine.TreeItem('Offset');
+      this.addChild(uiOffset, false);
+      this.ready = false;
 
-      // Flip it over so we see the front.
-      this.__uiGeomOffsetXfo.ori.setFromAxisAndAngle(new zeaEngine.Vec3(0, 1, 0), Math.PI);
-      this.setGeomOffsetXfo(this.__uiGeomOffsetXfo);
+      /* */
+      const resizeObserver = new ResizeObserver((entries) => {
+        resizeObserver.disconnect();
 
-      let renderRequestedId;
-      const processMutatedElems = () => {
-        this.renderUIToImage();
-        renderRequestedId = 0;
-      };
-      this.__mutationObserver = new MutationObserver((mutations) => {
-        if (!this.mainCtx) {
-          this.renderUIToImage();
-          return
-        }
-        // Batch the changes.
-        if (renderRequestedId) clearTimeout(renderRequestedId);
-        renderRequestedId = setTimeout(processMutatedElems, 50);
+        const localXfo = new zeaEngine.Xfo();
+        const dpm = 0.0005; // dots-per-meter (1 each 1/2mm)
+        localXfo.sc.set(dpm, dpm, dpm);
+        localXfo.ori.setFromEulerAngles(new zeaEngine.EulerAngles(Math.PI, Math.PI, 0));
+        // localXfo.ori.setFromAxisAndAngle(new Vec3(0, 1, 0), Math.PI)
+        // localXfo.ori.setFromAxisAndAngle(new Vec3(1, 0, 0), Math.PI)
+        uiOffset.getParameter('LocalXfo').setValue(localXfo);
+
+        this.size = new zeaEngine.Vec3(vrUIDOMElement.clientWidth * dpm, vrUIDOMElement.clientHeight * dpm, 1);
+
+        // debugGeomItemXfo.sc = this.size
+        // debugGeomItem.getParameter('LocalXfo').setValue(debugGeomItemXfo)
+
+        traverse(vrUIDOMElement, 0, (elem, depth) => {
+          if (elem.className == 'button') {
+            const size = elemSize(elem);
+            // console.log(depth, elem.id, elem.className, size.width, size.height, elem.offsetLeft, elem.offsetTop)
+            const localXfo = new zeaEngine.Xfo();
+
+            localXfo.sc.set(size.width, -size.height, 1);
+
+            // Note: The plane geom goes from [-0.5, -0.5] to [0.5, 0.5], so we need to offset it here.
+            // To debug the placements of these UI elements, display tbe backing panel by making this class
+            // in
+            localXfo.tr.set(
+              elem.offsetLeft + size.width * 0.5 - vrUIDOMElement.clientWidth * 0.5,
+              elem.offsetTop + size.height * 0.5 - vrUIDOMElement.clientHeight * 0.5,
+              -depth
+            );
+
+            const uimat = new zeaEngine.Material('element-vr-ui-mat', 'FlatSurfaceShader');
+            uimat.getParameter('BaseColor').setValue(new zeaEngine.Color(0.3, 0.3, 0.3));
+            const image = new zeaEngine.DataImage();
+            uimat.getParameter('BaseColor').setValue(image);
+
+            const geomItem = new zeaEngine.GeomItem('element-vr-ui', plane, uimat, localXfo);
+            geomItem.setSelectable(false);
+            uiOffset.addChild(geomItem, false);
+
+            const imageDatas = {};
+            if (size.width > 0 && size.height > 0) {
+              renderElementUI(elem, size, elem.id + elem.className, (data, key) => {
+                // console.log('Rendered', elem.id, elem.className, size.width, size.height, elem.offsetLeft, elem.offsetTop)
+                imageDatas[key] = data;
+                image.setData(size.width, size.height, data);
+              });
+            }
+
+            const mutationObserver = new MutationObserver((mutations) => {
+              if (size.width == 0 || size.height == 0) return
+              // Each time the dome changes, we use the classList as a key to cache
+              // the generated images. Update the UI by adding and removing classes
+              const key = elem.id + elem.className;
+              if (!imageDatas[key]) {
+                renderElementUI(elem, size, key, (data, key) => {
+                  imageDatas[key] = data;
+                  image.setData(size.width, size.height, data);
+                });
+              } else {
+                image.setData(size.width, size.height, imageDatas[key]);
+              }
+            });
+
+            mutationObserver.observe(elem, {
+              attributes: true,
+              characterData: false,
+              childList: false,
+              subtree: false,
+            });
+            return false
+          }
+          return true
+        });
+
+        this.ready = true;
+        this.emit('ready');
       });
-
-      this.__active = false;
-      this.__renderRequested = false;
+      resizeObserver.observe(vrUIDOMElement);
+      /* */
     }
 
     // ///////////////////////////////////
@@ -4037,83 +4147,14 @@ void main(void) {
      * The activate method.
      */
     activate() {
-      // During debugging we activate the UI explicitly, so avoid activating twice.
-      if (!this.__active) {
-        // document.body.appendChild(this.__vrUIDOMElement)
-        this.__vrUIDOMElement.style.display = 'block';
-        this.__active = true;
-
-        this.__mutationObserver.observe(this.__vrUIDOMElement, {
-          attributes: true,
-          characterData: true,
-          childList: true,
-          subtree: true,
-        });
-        this.renderUIToImage();
-      }
+      this.__vrUIDOMElement.style.display = 'block';
     }
 
     /**
      * The deactivate method.
      */
     deactivate() {
-      // document.body.removeChild(this.__vrUIDOMElement)
       this.__vrUIDOMElement.style.display = 'none';
-      this.__active = false;
-      this.__mutationObserver.disconnect();
-    }
-
-    // ///////////////////////////////////
-    // VRController events
-
-    /**
-     * The updateUIImage method.
-     */
-    updateUIImage() {
-      const imageData = this.mainCtx.getImageData(0, 0, this.__rect.width, this.__rect.height);
-      this.__uiimage.setData(this.__rect.width, this.__rect.height, new Uint8Array(imageData.data.buffer));
-    }
-
-    /**
-     * The renderUIToImage method.
-     */
-    renderUIToImage() {
-      domtoimage.toCanvas(this.__vrUIDOMElement).then((canvas) => {
-        // if (this.canvas) {
-        //   document.body.removeChild(this.canvas)
-        // }
-        // document.body.appendChild(canvas)
-        // this.canvas = canvas
-
-        this.mainCtx = canvas.getContext('2d');
-        this.mainCtx.fillStyle = '#FFFFFF';
-
-        // const rect = this.__vrUIDOMElement.getBoundingRect()
-        const rect = {
-          width: this.__vrUIDOMElement.clientWidth,
-          height: this.__vrUIDOMElement.clientHeight,
-        };
-        // Sometimes a rendeer request occurs as the UI is being hidden.
-        if (rect.width * rect.height == 0) return
-
-        // const dpm = 0.0003; //dots-per-meter (1 each 1/2mm)
-        if (rect.width != this.__rect.width || rect.height != this.__rect.height) {
-          this.__rect = rect;
-          const dpm = 0.0005; // dots-per-meter (1 each 1/2mm)
-          this.__uiGeomOffsetXfo.sc.set(this.__rect.width * dpm, this.__rect.height * dpm, 1.0);
-          this.setGeomOffsetXfo(this.__uiGeomOffsetXfo);
-
-          if (this.appData.session) {
-            this.appData.session.pub('pose-message', {
-              interfaceType: 'VR',
-              updateUIPanel: {
-                size: this.__uiGeomOffsetXfo.sc.toJSON(),
-              },
-            });
-          }
-        }
-        this.updateUIImage();
-      });
     }
 
     /**
@@ -4125,8 +4166,6 @@ void main(void) {
      */
     sendMouseEvent(eventName, args, element) {
       // console.log('sendMouseEvent:', eventName, element)
-
-      if (eventName == 'mousedown') console.log('clientX:' + args.clientX + ' clientY:' + args.clientY);
 
       const event = new MouseEvent(
         eventName,
@@ -4159,6 +4198,7 @@ void main(void) {
     /**
      * Create a VR UI tool.
      * @param {object} appData - The appData value.
+     * @param {HTMLElement} vrUIDOMElement - The  dom element we will use as the VR UI
      */
     constructor(appData, vrUIDOMElement) {
       super(appData);
@@ -4167,8 +4207,8 @@ void main(void) {
       this.__vrUIDOMElement = vrUIDOMElement;
       this.controllerUI = new VRControllerUI(appData, this.__vrUIDOMElement);
 
-      this.__uiLocalXfo = new zeaEngine.Xfo();
-      this.__uiLocalXfo.ori.setFromAxisAndAngle(new zeaEngine.Vec3(1, 0, 0), Math.PI * -0.6);
+      // To debug the UI in the renderer without being in VR, enable this line.
+      // appData.renderer.addTreeItem(this.controllerUI)
 
       const pointermat = new zeaEngine.Material('pointermat', 'LinesShader');
       pointermat.setSelectable(false);
@@ -4187,6 +4227,7 @@ void main(void) {
       this.__pointerLocalXfo.ori.setFromAxisAndAngle(new zeaEngine.Vec3(1, 0, 0), Math.PI * -0.2);
 
       this.__uiPointerItem = new zeaEngine.GeomItem('VRControllerPointer', line, pointermat);
+      this.__uiPointerItem.setSelectable(false);
 
       this.__triggerHeld = false;
       this.uiOpen = false;
@@ -4228,35 +4269,46 @@ void main(void) {
       this.uiController = uiController;
       this.pointerController = pointerController;
 
-      const xfoA = this.uiController.getTreeItem().getParameter('GlobalXfo').getValue();
+      const uiLocalXfo = this.controllerUI.getParameter('LocalXfo').getValue();
+      uiLocalXfo.ori.setFromAxisAndAngle(new zeaEngine.Vec3(1, 0, 0), Math.PI * -0.6);
+      // uiLocalXfo.tr.set(0, -0.05, 0.08)
+
       if (this.pointerController) {
+        const xfoA = this.uiController.getTreeItem().getParameter('GlobalXfo').getValue();
         const xfoB = this.pointerController.getTreeItem().getParameter('GlobalXfo').getValue();
         const headToCtrlA = xfoA.tr.subtract(headXfo.tr);
         const headToCtrlB = xfoB.tr.subtract(headXfo.tr);
         if (headToCtrlA.cross(headToCtrlB).dot(headXfo.ori.getYaxis()) > 0.0) {
-          this.__uiLocalXfo.tr.set(0.05, -0.05, 0.08);
+          uiLocalXfo.tr.set(0.05, -0.05, 0.08);
         } else {
-          this.__uiLocalXfo.tr.set(-0.05, -0.05, 0.08);
+          uiLocalXfo.tr.set(-0.05, -0.05, 0.08);
         }
       } else {
-        this.__uiLocalXfo.tr.set(0, -0.05, 0.08);
+        uiLocalXfo.tr.set(0, -0.05, 0.08);
       }
 
-      this.controllerUI.getParameter('LocalXfo').setValue(this.__uiLocalXfo);
+      this.controllerUI.getParameter('LocalXfo').setValue(uiLocalXfo);
 
       if (this.uiController) {
         this.uiController.getTipItem().addChild(this.controllerUI, false);
         if (this.pointerController) this.pointerController.getTipItem().addChild(this.__uiPointerItem, false);
 
         if (this.appData.session) {
-          this.appData.session.pub('pose-message', {
-            interfaceType: 'VR',
-            showUIPanel: {
-              controllerId: this.uiController.getId(),
-              localXfo: this.__uiLocalXfo.toJSON(),
-              size: this.controllerUI.getGeomOffsetXfo().sc.toJSON(),
-            },
-          });
+          const postMessage = () => {
+            this.appData.session.pub('pose-message', {
+              interfaceType: 'VR',
+              showUIPanel: {
+                controllerId: this.uiController.getId(),
+                localXfo: uiLocalXfo.toJSON(),
+                size: this.controllerUI.size.toJSON(),
+              },
+            });
+          };
+          if (!this.controllerUI.ready) {
+            this.controllerUI.on('ready', postMessage);
+          } else {
+            postMessage();
+          }
         }
       }
       this.uiOpen = true;
@@ -4305,11 +4357,11 @@ void main(void) {
      */
     calcUIIntersection() {
       const pointerXfo = this.__uiPointerItem.getParameter('GlobalXfo').getValue();
-      const pointervec = pointerXfo.ori.getZaxis().negate();
-      const ray = new zeaEngine.Ray(pointerXfo.tr, pointervec);
+      const pointerVec = pointerXfo.ori.getZaxis().negate();
+      const ray = new zeaEngine.Ray(pointerXfo.tr, pointerVec);
 
       const planeXfo = this.controllerUI.getParameter('GlobalXfo').getValue();
-      const planeSize = this.controllerUI.getGeomOffsetXfo().sc.multiply(planeXfo.sc);
+      const planeSize = this.controllerUI.size.multiply(planeXfo.sc);
 
       const plane = new zeaEngine.Ray(planeXfo.tr, planeXfo.ori.getZaxis().negate());
       const res = ray.intersectRayPlane(plane);
@@ -4318,7 +4370,7 @@ void main(void) {
         this.setPointerLength(0.5);
         return
       }
-      const hitOffset = pointerXfo.tr.add(pointervec.scale(res)).subtract(plane.start);
+      const hitOffset = pointerXfo.tr.add(pointerVec.scale(res)).subtract(plane.start);
       const x = hitOffset.dot(planeXfo.ori.getXaxis()) / planeSize.x;
       const y = hitOffset.dot(planeXfo.ori.getYaxis()) / planeSize.y;
       if (Math.abs(x) > 0.5 || Math.abs(y) > 0.5) {
@@ -4326,7 +4378,7 @@ void main(void) {
         this.setPointerLength(0.5);
         return
       }
-      this.setPointerLength(res);
+      this.setPointerLength(res / planeXfo.sc.z);
       const rect = this.__vrUIDOMElement.getBoundingClientRect();
       return {
         clientX: Math.round(x * -rect.width + rect.width / 2),
@@ -4347,13 +4399,17 @@ void main(void) {
         hit.offsetY = hit.pageY = hit.pageY = hit.screenY = hit.clientY;
 
         let element = document.elementFromPoint(hit.clientX, hit.clientY);
-        if (element.shadowRoot) element = element.shadowRoot.elementFromPoint(hit.clientX, hit.clientY);
-        if (element != this._element) {
-          if (this._element) this.controllerUI.sendMouseEvent('mouseleave', Object.assign(args, hit), this._element);
-          this._element = element;
-          this.controllerUI.sendMouseEvent('mouseenter', Object.assign(args, hit), this._element);
+        if (element) {
+          if (element.shadowRoot) element = element.shadowRoot.elementFromPoint(hit.clientX, hit.clientY);
+          if (element != this._element) {
+            if (this._element) this.controllerUI.sendMouseEvent('mouseleave', Object.assign(args, hit), this._element);
+            this._element = element;
+            this.controllerUI.sendMouseEvent('mouseenter', Object.assign(args, hit), this._element);
+          }
+          this.controllerUI.sendMouseEvent(eventName, Object.assign(args, hit), this._element);
+        } else {
+          this._element = null;
         }
-        this.controllerUI.sendMouseEvent(eventName, Object.assign(args, hit), this._element);
         return this._element
       } else if (this._element) {
         this.controllerUI.sendMouseEvent('mouseleave', Object.assign(args, hit), this._element);
@@ -4609,6 +4665,7 @@ void main(void) {
       this.__vrControllers = [];
       this.__heldObjectCount = 0;
       this.__heldGeomItems = [];
+      this.__highlightedGeomItemIds = []; // controller id to held goem id.
       this.__heldGeomItemIds = []; // controller id to held goem id.
       this.__heldGeomItemRefs = [];
       this.__heldGeomItemOffsets = [];
@@ -4717,23 +4774,24 @@ void main(void) {
         const id = event.controller.getId();
         this.__vrControllers[id] = event.controller;
 
-        const intersectionData = event.controller.getGeomItemAtTip();
-        if (intersectionData) {
-          // if (intersectionData.geomItem.getOwner() instanceof Handle) return false
+        // const intersectionData = event.controller.getGeomItemAtTip()
+        const geomItem = this.__highlightedGeomItemIds[id];
+        if (geomItem) {
+          // if (geomItem.getOwner() instanceof Handle) return false
 
           // console.log("onMouseDown on Geom"); // + " Material:" + geomItem.getMaterial().name);
-          // console.log(intersectionData.geomItem.getPath()) // + " Material:" + geomItem.getMaterial().name);
+          // console.log(geomItem.getPath()) // + " Material:" + geomItem.getMaterial().name);
 
-          let gidx = this.__heldGeomItems.indexOf(intersectionData.geomItem);
+          let gidx = this.__heldGeomItems.indexOf(geomItem);
           if (gidx == -1) {
             gidx = this.__heldGeomItems.length;
             this.__heldObjectCount++;
-            this.__heldGeomItems.push(intersectionData.geomItem);
+            this.__heldGeomItems.push(geomItem);
             this.__heldGeomItemRefs[gidx] = [id];
             this.__heldGeomItemIds[id] = gidx;
 
             const changeData = {
-              newItem: intersectionData.geomItem,
+              newItem: geomItem,
               newItemId: gidx,
             };
             if (!this.change) {
@@ -4786,7 +4844,30 @@ void main(void) {
      */
     onPointerMove(event) {
       if (event.pointerType === zeaEngine.POINTER_TYPES.xr) {
-        if (!this.change) return
+        if (!this.change) {
+          event.controllers.forEach((controller) => {
+            const id = controller.getId();
+            const intersectionData = controller.getGeomItemAtTip();
+            if (intersectionData) {
+              const geomItem = intersectionData.geomItem;
+              if (this.__highlightedGeomItemIds[id] != geomItem) {
+                if (this.__highlightedGeomItemIds[id]) {
+                  this.__highlightedGeomItemIds[id].removeHighlight('vrHoldObject');
+                }
+                geomItem.addHighlight('vrHoldObject', new zeaEngine.Color(1, 0, 0, 0.2));
+                this.__highlightedGeomItemIds[id] = geomItem;
+              }
+            } else {
+              if (this.__highlightedGeomItemIds[id]) {
+                const geomItem = this.__highlightedGeomItemIds[id];
+                geomItem.removeHighlight('vrHoldObject');
+                this.__highlightedGeomItemIds[id] = null;
+              }
+            }
+          });
+
+          return
+        }
 
         const changeXfos = [];
         const changeXfoIds = [];
@@ -4859,7 +4940,7 @@ void main(void) {
       this.removeToolOnRightClick = true;
       this.parentItem = 'parentItem' in appData ? appData.parentItem : appData.scene.getRoot();
 
-      this.lineColor = this.addParameter(new zeaEngine.ColorParameter('LineColor', new zeaEngine.Color(0.7, 0.2, 0.2)));
+      this.colorParam = this.addParameter(new zeaEngine.ColorParameter('Color', new zeaEngine.Color(0.7, 0.2, 0.2)));
 
       this.controllerAddedHandler = this.controllerAddedHandler.bind(this);
     }
@@ -4868,10 +4949,11 @@ void main(void) {
       if (!this.vrControllerToolTip) {
         this.vrControllerToolTip = new zeaEngine.Cross(0.05);
         this.vrControllerToolTipMat = new zeaEngine.Material('VRController Cross', 'LinesShader');
-        this.vrControllerToolTipMat.getParameter('BaseColor').setValue(this.lineColor.getValue());
+        this.vrControllerToolTipMat.getParameter('BaseColor').setValue(this.colorParam.getValue());
         this.vrControllerToolTipMat.setSelectable(false);
       }
       const geomItem = new zeaEngine.GeomItem('CreateGeomToolTip', this.vrControllerToolTip, this.vrControllerToolTipMat);
+      geomItem.setSelectable(false);
       // controller.getTipItem().removeAllChildren()
       controller.getTipItem().addChild(geomItem, false);
     }
@@ -5191,6 +5273,9 @@ void main(void) {
       j.parentItemPath = this.parentItem.getPath();
       j.geomItemName = this.geomItem.getName();
       j.geomItemXfo = this.geomItem.getParameter('LocalXfo').getValue();
+
+      const material = this.geomItem.getParameter('Material').getValue();
+      j.color = material.getParameter('BaseColor').getValue();
       return j
     }
 
@@ -5208,6 +5293,13 @@ void main(void) {
       xfo.fromJSON(j.geomItemXfo);
       this.geomItem.getParameter('LocalXfo').setValue(xfo);
       this.childIndex = this.parentItem.addChild(this.geomItem, false);
+
+      if (j.color) {
+        const color = new zeaEngine.Color(0.7, 0.2, 0.2);
+        color.fromJSON(j.color);
+        const material = this.geomItem.getParameter('Material').getValue();
+        material.getParameter('BaseColor').setValue(color);
+      }
     }
 
     // updateFromJSON(j) {
@@ -5376,14 +5468,15 @@ void main(void) {
      * @param {TreeItem} parentItem - The parentItem value.
      * @param {Xfo} xfo - The xfo value.
      */
-    constructor(parentItem, xfo) {
+    constructor(parentItem, xfo, color) {
       super('Create Cone');
 
       const cone = new zeaEngine.Cone(0.0, 0.0);
-      const material = new zeaEngine.Material('Sphere', 'SimpleSurfaceShader');
-      this.geomItem = new zeaEngine.GeomItem('Sphere', cone, material);
+      const material = new zeaEngine.Material('Cone', 'SimpleSurfaceShader');
+      this.geomItem = new zeaEngine.GeomItem('Cone', cone, material);
 
       if (parentItem && xfo) {
+        material.getParameter('BaseColor').setValue(color);
         this.setParentAndXfo(parentItem, xfo);
       }
     }
@@ -5430,7 +5523,7 @@ void main(void) {
     createStart(xfo) {
       this.xfo = xfo;
       this.invXfo = xfo.inverse();
-      this.change = new CreateConeChange(this.parentItem, xfo);
+      this.change = new CreateConeChange(this.parentItem, xfo, this.colorParam.getValue());
       UndoRedoManager.getInstance().addChange(this.change);
 
       this.stage = 1;
@@ -5827,11 +5920,11 @@ void main(void) {
         // this.line.addVertexAttribute('lineThickness', Float32, 0.0);
       }
 
-      const color = new zeaEngine.Color(0.7, 0.2, 0.2);
       if (j.color) {
+        const color = new zeaEngine.Color(0.7, 0.2, 0.2);
         color.fromJSON(j.color);
+        this.geomItem.getMaterial().getParameter('BaseColor').setValue(color);
       }
-      this.geomItem.getMaterial().getParameter('BaseColor').setValue(color);
 
       super.fromJSON(j, context);
     }
@@ -5865,7 +5958,7 @@ void main(void) {
      * @param {Xfo} xfo - The xfo param.
      */
     createStart(xfo) {
-      const color = this.lineColor.getValue();
+      const color = this.colorParam.getValue();
       const lineThickness = this.lineThickness.getValue();
 
       this.change = new CreateFreehandLineChange(this.parentItem, xfo, color, lineThickness);
@@ -5923,14 +6016,15 @@ void main(void) {
      * @param {TreeItem} parentItem - The parentItem value.
      * @param {Xfo} xfo - The xfo value.
      */
-    constructor(parentItem, xfo) {
+    constructor(parentItem, xfo, color) {
       super('CreateSphere', parentItem);
 
-      this.sphere = new zeaEngine.Sphere(0, 64, 32);
+      this.sphere = new zeaEngine.Sphere(0, 24, 12);
       const material = new zeaEngine.Material('Sphere', 'SimpleSurfaceShader');
       this.geomItem = new zeaEngine.GeomItem('Sphere', this.sphere, material);
 
-      if (parentItem && xfo) {
+      if (parentItem && xfo && color) {
+        material.getParameter('BaseColor').setValue(color);
         this.setParentAndXfo(parentItem, xfo);
       }
     }
@@ -5993,7 +6087,7 @@ void main(void) {
      * @param {Xfo} xfo - The xfo param.
      */
     createStart(xfo) {
-      this.change = new CreateSphereChange(this.parentItem, xfo);
+      this.change = new CreateSphereChange(this.parentItem, xfo, this.colorParam.getValue());
       UndoRedoManager.getInstance().addChange(this.change);
 
       this.xfo = xfo;
@@ -6040,7 +6134,7 @@ void main(void) {
      * @param {TreeItem} parentItem - The parentItem value.
      * @param {Xfo} xfo - The xfo value.
      */
-    constructor(parentItem, xfo) {
+    constructor(parentItem, xfo, color) {
       super('CreateCuboid');
 
       this.cuboid = new zeaEngine.Cuboid(0, 0, 0, true);
@@ -6048,6 +6142,7 @@ void main(void) {
       this.geomItem = new zeaEngine.GeomItem('Cuboid', this.cuboid, material);
 
       if (parentItem && xfo) {
+        material.getParameter('BaseColor').setValue(color);
         this.setParentAndXfo(parentItem, xfo);
       }
     }
@@ -6099,7 +6194,7 @@ void main(void) {
      * @param {Xfo} xfo - The xfo param.
      */
     createStart(xfo) {
-      this.change = new CreateCuboidChange(this.parentItem, xfo);
+      this.change = new CreateCuboidChange(this.parentItem, xfo, this.colorParam.getValue());
       UndoRedoManager.getInstance().addChange(this.change);
 
       this.xfo = xfo;
@@ -6124,7 +6219,6 @@ void main(void) {
         });
       } else {
         const vec = this.invXfo.transformVec3(pt);
-        console.log('vecY:', vec.y);
         this.change.update({ height: vec.y });
       }
     }
@@ -6181,6 +6275,17 @@ void main(void) {
       const tool = this.toolStack[this.toolStack.length - 1];
       if (tool.deactivateTool) tool.deactivateTool();
       this.toolStack.pop();
+    }
+
+    /**
+     * Returns the tool currently at the top of the stack.
+     * @return {Tool} - the currently active tool.
+     */
+    activeTool() {
+      if (this.toolStack.length > 0) {
+        return this.toolStack[this.toolStack.length - 1]
+      }
+      return ''
     }
 
     /**
