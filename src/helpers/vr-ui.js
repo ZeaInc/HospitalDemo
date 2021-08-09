@@ -1,4 +1,14 @@
+const { Ray, Xfo, Vec3, Color } = window.zeaEngine
+
+/**
+ * This sample UI class shows how to build a custom UI for VR interfaces.
+ *
+ * @extends {HTMLElement}
+ */
 class VRUI extends HTMLElement {
+  /**
+   * Creates an instance of VRUI.
+   */
   constructor() {
     super()
     const shadowRoot = this.attachShadow({ mode: 'open' })
@@ -102,8 +112,8 @@ class VRUI extends HTMLElement {
   position: absolute;
   top: 0px;
   left: 0px;
-  width: 320px;
-  z-index: 150;
+  width: 280px;
+  user-select: none;
 }
 
 .button {
@@ -111,7 +121,7 @@ class VRUI extends HTMLElement {
   width: 90px;
   height: 90px; 
   border-radius: 15px;
-  background-color: #FFFFFF;
+  background-color: #b0b0b0;
   margin: 5px;
   display: flex;
   align-items: center;
@@ -125,37 +135,19 @@ class VRUI extends HTMLElement {
 
 #buttonsContainer {
   display: flex;
-  width: 280px;
-  flex-wrap: wrap;
-  flex-direction: row;
-}
-
-#toolsContainer {
-  display: flex;
   width: 100%;
-  height: 100%;
   flex-wrap: wrap;
   flex-direction: row;
-  display: inline-block;
-}
-.tool {
-  border: 2px solid #333333;
-  width: 200px;
-  height: 100px; 
-  border-radius: 15px;
-  background-color: #FFFFFF;
-  margin: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .button-hover {
-  background: #D8D8D8;
+  background: #d0d0d0;
+  border: 2px dashed #FF0000;
 }
 
 .button-active {
-  background: #F9CE03;
+  border: 2px solid #FF0000;
+  background: #FFFFFF;
 }
 
 .label {
@@ -166,17 +158,25 @@ class VRUI extends HTMLElement {
     shadowRoot.appendChild(styleTag)
   }
 
+  /**
+   * Sets the renderer to the UI so it can support VR actions.
+   * @param {GLRenderer} renderer
+   */
   setRenderer(renderer) {
     this.renderer = renderer
   }
 
+  /**
+   * Sets the ToolManager to the UI so it can configure the tool buttons.
+   * @param {ToolManager} toolManager
+   */
   setToolManager(toolManager) {
     this.toolManager = toolManager
 
     const addToolButton = (name, icon) => {
       const tool = toolManager.tools[name]
       const toolDiv = document.createElement('div')
-      toolDiv.classList.add('tool')
+      toolDiv.classList.add('button')
       let toolActive = false
       toolDiv.addEventListener('mousedown', () => {
         if (!toolActive) {
@@ -191,6 +191,8 @@ class VRUI extends HTMLElement {
 
       tool.on('activatedChanged', (event) => {
         if (event.activated) {
+          if (tool.colorParam) tool.colorParam.setValue(color)
+
           toolDiv.classList.add('button-active')
           toolActive = true
         } else {
@@ -207,7 +209,7 @@ class VRUI extends HTMLElement {
         toolDiv.classList.remove('button-hover')
       })
 
-      this.toolsContainer.appendChild(toolDiv)
+      this.buttonsContainer.appendChild(toolDiv)
 
       if (icon) {
         const img = new Image()
@@ -228,9 +230,61 @@ class VRUI extends HTMLElement {
     //   if (key == 'VRHoldObjectsTool') continue
     //   addToolButton(key)
     // }
-    addToolButton('Freehand Line Tool', 'images/pen-tool.png')
     addToolButton('VRHoldObjectsTool', 'images/grab-icon.png')
+    addToolButton('Freehand Line Tool', 'images/pen-tool.png')
+    addToolButton('Create Cuboid', 'images/create-cuboid-icon.png')
+    addToolButton('Create Sphere', 'images/create-sphere-icon.png')
+    addToolButton('Create Cone', 'images/create-cone-icon.png')
+
+    let color = new Color('#FFD800')
+    const addColorButton = (icon, cb) => {
+      const buttonDiv = document.createElement('div')
+      buttonDiv.classList.add('button')
+      this.buttonsContainer.appendChild(buttonDiv)
+      buttonDiv.addEventListener('mouseenter', () => {
+        buttonDiv.classList.add('button-hover')
+      })
+      buttonDiv.addEventListener('mouseleave', () => {
+        buttonDiv.classList.remove('button-hover')
+      })
+      buttonDiv.addEventListener('mousedown', () => {
+        activeButtonDiv.classList.remove('button-active')
+        buttonDiv.classList.add('button-active')
+        activeButtonDiv = buttonDiv
+        cb(buttonDiv)
+
+        const tool = toolManager.activeTool()
+        if (tool && tool.colorParam) tool.colorParam.setValue(color)
+      })
+      buttonDiv.addEventListener('mouseup', () => {})
+      const img = new Image()
+      img.classList.add('button-image')
+      img.src = icon
+      buttonDiv.appendChild(img)
+      return buttonDiv
+    }
+
+    addColorButton('images/color-red.png', (buttonDiv) => {
+      color = new Color(1, 0, 0)
+    })
+    addColorButton('images/color-green.png', (buttonDiv) => {
+      color = new Color(0, 1, 0)
+    })
+    addColorButton('images/color-blue.png', (buttonDiv) => {
+      color = new Color(0, 0, 1)
+    })
+    let activeButtonDiv = addColorButton(
+      'images/color-yellow.png',
+      (buttonDiv) => {
+        color = new Color('#FFD800')
+      }
+    )
   }
+
+  /**
+   * Sets the sessionRecorder to the UI so it can make recordings of VR sessions.
+   * @param {SessionRecorder} sessionRecorder
+   */
   setSessionRecorder(sessionRecorder) {
     this.sessionRecorder = sessionRecorder
   }

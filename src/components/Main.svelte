@@ -51,6 +51,10 @@
     VRUITool,
     VRHoldObjectsTool,
     CreateFreehandLineTool,
+    CreateSphereTool,
+    CreateCuboidTool,
+    CreateConeTool,
+    ParameterValueChange,
   } = window.zeaUx
 
   const { Session, SessionSync } = window.zeaCollab
@@ -322,7 +326,7 @@
         })
         fileLoaded = true
       } else {
-        const assetUrl = 'data/Hospital/productStructure.json'
+        const assetUrl = 'data/Hospital/hospital.json'
         loadProductStructure(assetUrl, assetUrl).then((root) => {
           $assets.addChild(root)
           root.on('loaded', (event) => {
@@ -377,6 +381,7 @@
       }
     }
     /** LOAD ASSETS END */
+    fileLoaded = true
 
     /** COLLAB START*/
     if (!embeddedMode) {
@@ -475,14 +480,18 @@
     /** DYNAMIC SELECTION UI END */
 
     /** VR TOOLS SETUP START */
-
     const holdObjectsTool = new VRHoldObjectsTool(appData)
     const freehandLineTool = new CreateFreehandLineTool(appData)
-
+    const createSphereTool = new CreateSphereTool(appData)
+    const createCuboidTool = new CreateCuboidTool(appData)
+    const createConeTool = new CreateConeTool(appData)
     const vrToolManager = new ToolManager(appData)
 
     // Register both tools.
     vrToolManager.registerTool('VRHoldObjectsTool', holdObjectsTool)
+    vrToolManager.registerTool('Create Cuboid', createCuboidTool)
+    vrToolManager.registerTool('Create Sphere', createSphereTool)
+    vrToolManager.registerTool('Create Cone', createConeTool)
     vrToolManager.registerTool('Freehand Line Tool', freehandLineTool)
 
     const vrUIDOMElement = document.createElement('vr-ui')
