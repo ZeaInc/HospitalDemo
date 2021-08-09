@@ -39,7 +39,15 @@
       "tr": { "x": 0.0, "y": 0.0, "z": 0.0 },
       "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
     },
-    "_children": [
+    "children": [
+      {
+        "Reference": "Autodesk_Hospital_Site",
+        "InstanceName": "Site",
+        "xfo": {
+          "tr": { "x": 0.0, "y": 0.0, "z": -166.85 },
+          "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+        }
+      },
       {
         "Reference": "Autodesk_Hospital_Sprinkler",
         "InstanceName": "Sprinkler",
@@ -85,16 +93,6 @@
         "InstanceName": "Structural",
         "xfo": {
           "tr": { "x": 0.0, "y": 0.0, "z": 0.0 },
-          "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
-        }
-      }
-    ],
-    "children": [
-      {
-        "Reference": "Autodesk_Hospital_Site",
-        "InstanceName": "Site",
-        "xfo": {
-          "tr": { "x": 0.0, "y": 0.0, "z": -166.85 },
           "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
         }
       },

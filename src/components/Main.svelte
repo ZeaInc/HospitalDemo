@@ -112,7 +112,6 @@
       res = loadGLTFAsset(url, filename)
     } else if (filename.endsWith('json')) {
       loadProductStructure(url, filename).then((root) => {
-        console.log('Done Tree')
         $assets.addChild(root)
       })
     }
@@ -233,9 +232,9 @@
 
     renderer.getViewport().on('pointerDown', (event) => {
       if (isMenuVisible) closeMenu()
-      if (event.intersectionData) {
-        console.log(event.intersectionData.geomItem.getPath())
-      }
+      // if (event.intersectionData) {
+      //   console.log(event.intersectionData.geomItem.getPath())
+      // }
       if (event.pointerType == 'touch' && event.intersectionData) {
         const item = filterItemSelection(event.intersectionData.geomItem)
         startLongTouchTimer(event, item)
@@ -528,7 +527,6 @@
     isMenuVisible = true
   }
   const closeMenu = () => {
-    console.log('closeMenu:')
     isMenuVisible = false
   }
   let isDialogOpen = false
