@@ -7,7 +7,7 @@ import sha256 from 'sha256'
 // tools such as Firebase, Auth0, etc.
 
 // To disable authentication, set `shouldAuthenticate` to false.
-const shouldAuthenticate = false
+const shouldAuthenticate = true
 
 // Mocked password: "zea"
 // Rembember to generate a new one for your demo, here:
