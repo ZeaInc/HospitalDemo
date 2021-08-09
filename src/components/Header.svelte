@@ -41,6 +41,8 @@
   let userData
 
   document.addEventListener('keydown', (event) => {
+    // Key events can occur before the renderer is setup.
+    if (!renderer) return
     const canvasIsTarget = event.target.contains(renderer.getGLCanvas())
 
     if (!canvasIsTarget) {
