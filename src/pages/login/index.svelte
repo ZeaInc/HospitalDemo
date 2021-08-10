@@ -107,7 +107,7 @@
     class="bg-background min-h-full flex items-center justify-center py-12 px-4 text-foreground sm:px-6 lg:px-8"
   >
     <div class="max-w-md w-full space-y-8">
-      <h2 class="mt-6 text-center text-3xl font-extrabold">Hosptial Demo</h2>
+      <h2 class="mt-6 text-center text-3xl font-extrabold">Hospital Demo</h2>
       <p class="mt-6 text-center">
         This sample show loading a large and complex BIM model, while supporting
         collaborative users and VR.
