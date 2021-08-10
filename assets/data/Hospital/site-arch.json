@@ -1,0 +1,61 @@
+{
+  "Reference List": [
+    {
+      "Name": "Autodesk_Hospital_Electrical",
+      "url": "./Autodesk_Hospital_Electrical.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_FireAlarm",
+      "url": "./Autodesk_Hospital_FireAlarm.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_Site",
+      "url": "./Autodesk_Hospital_Site.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_Plumbing",
+      "url": "./Autodesk_Hospital_Plumbing.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_Sprinkler",
+      "url": "./Autodesk_Hospital_Sprinkler.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_HVAC",
+      "url": "./Autodesk_Hospital_HVAC.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_Structural",
+      "url": "./Autodesk_Hospital_Structural.zcad"
+    },
+    {
+      "Name": "Autodesk_Hospital_Architectural",
+      "url": "./Autodesk_Hospital_Architectural.zcad"
+    }
+  ],
+  "Root": {
+    "Name": "Hospital",
+    "xfo": {
+      "tr": { "x": 0.0, "y": 0.0, "z": 0.0 },
+      "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+    },
+    "children": [
+      {
+        "Reference": "Autodesk_Hospital_Site",
+        "InstanceName": "Site",
+        "xfo": {
+          "tr": { "x": 0.0, "y": 0.0, "z": -166.85 },
+          "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+        }
+      },
+      {
+        "Reference": "Autodesk_Hospital_Architectural",
+        "InstanceName": "Architectural",
+        "xfo": {
+          "tr": { "x": 0.0, "y": 0.0, "z": 0.0 },
+          "ori": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+        }
+      }
+    ]
+  }
+}

@@ -328,7 +328,7 @@
         })
         fileLoaded = true
       } else {
-        const assetUrl = 'data/Hospital/hospital.json'
+        const assetUrl = 'data/Hospital/site-struct.json'
         loadProductStructure(assetUrl, assetUrl).then((root) => {
           $assets.addChild(root)
           root.on('loaded', (event) => {
