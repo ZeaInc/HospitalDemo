@@ -4231,6 +4231,12 @@ void main(void) {
 
       this.__triggerHeld = false;
       this.uiOpen = false;
+
+      this.appData.renderer.getXRViewport().then((xrvp) => {
+        xrvp.on('presentingChanged', (event) => {
+          if (this.uiOpen && !event.state) this.closeUI();
+        });
+      });
     }
 
     /**
@@ -5931,6 +5937,7 @@ void main(void) {
       if (j.lineThickness) {
         this.line.lineThickness = j.lineThickness;
         // this.line.addVertexAttribute('lineThickness', Float32, 0.0);
+        this.geomItem.getMaterial().getParameter('LineThickness').setValue(j.lineThickness);
       }
 
       if (j.color) {
