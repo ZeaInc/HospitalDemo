@@ -232,9 +232,12 @@
 
     renderer.getViewport().on('pointerDown', (event) => {
       if (isMenuVisible) closeMenu()
-      // if (event.intersectionData) {
-      //   console.log(event.intersectionData.geomItem.getPath())
-      // }
+      if (event.intersectionData && event.pointerType == 'mouse') {
+        const { geomItem } = event.intersectionData
+        console.log(geomItem.getPath())
+        const material = geomItem.getParameter('Material').getValue()
+        console.log(material.getName(), material.getShaderName())
+      }
       if (event.pointerType == 'touch' && event.intersectionData) {
         const item = filterItemSelection(event.intersectionData.geomItem)
         startLongTouchTimer(event, item)
@@ -331,8 +334,8 @@
           root.on('loaded', (event) => {
             console.log('Done:', event.InstanceName)
             if (event.name == 'Architectural') {
-              const Ribs = root.resolvePath([
-                'Hospital',
+              const asset = event.treeItem
+              const Ribs = asset.resolvePath([
                 'Architectural',
                 'Assembly_0',
                 'Default',
@@ -358,9 +361,12 @@
                 ['Level 3', 'Stair:7" max riser 11" tread:189710:2'],
                 ['Level 4', 'Stair:7" max riser 11" tread:189710:3'],
                 ['Level 5', 'Stair:7" max riser 11" tread:189710:4'],
+                [
+                  'Level 1',
+                  'Stair:7" max riser 11" tread - no stringer:196518',
+                ],
               ].forEach((subpath) => {
                 const path = [
-                  'Hospital',
                   'Architectural',
                   'Assembly_0',
                   'Default',
@@ -368,11 +374,25 @@
                   subpath[0],
                   subpath[1],
                 ]
-                const Stairs = root.resolvePath(path)
+                const Stairs = asset.resolvePath(path)
                 if (Stairs) {
                   Stairs.setVisible(false)
                 }
               })
+
+              const materials = asset.getMaterialLibrary()
+              const windows = materials.getMaterial('Body_0002')
+              {
+                var color = windows.getParameter('BaseColor').getValue()
+                color.a = 0.3
+                windows.getParameter('BaseColor').setValue(color)
+              }
+              const greyWindows = materials.getMaterial('Body_0007')
+              {
+                var color = greyWindows.getParameter('BaseColor').getValue()
+                color.a = 0.5
+                greyWindows.getParameter('BaseColor').setValue(color)
+              }
             }
           })
         })
