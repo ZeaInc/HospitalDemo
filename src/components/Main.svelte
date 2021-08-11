@@ -126,6 +126,9 @@
       debugGeomIds: urlParams.has('debugGeomIds'),
       enableFrustumCulling: true,
       enableOcclusionCulling: false,
+      outlineThickness: 0,
+      outlineSensitivity: 0.5,
+      outlineColor: new Color(0.2, 0.2, 0.2, 1),
     })
 
     $scene = new Scene()
@@ -137,9 +140,6 @@
       envMap.getParameter('HeadLightMode').setValue(true)
       $scene.getSettings().getParameter('EnvMap').setValue(envMap)
     }
-
-    renderer.outlineThickness = 0.5
-    renderer.outlineColor = new Color(0.2, 0.2, 0.2, 1)
 
     renderer
       .getViewport()
@@ -321,14 +321,9 @@
         const assetUrl = urlParams.get('gltf')
         loadAsset(assetUrl, assetUrl)
         fileLoaded = true
-      } else if (urlParams.has('prdStruct')) {
-        const assetUrl = urlParams.get('prdStruct')
-        loadProductStructure(assetUrl, assetUrl).then((root) => {
-          $assets.addChild(root)
-        })
-        fileLoaded = true
       } else {
-        const assetUrl = 'data/Hospital/site-struct.json'
+        let assetUrl = 'data/Hospital/site-struct.json'
+        if (urlParams.has('prdStruct')) assetUrl = urlParams.get('prdStruct')
         loadProductStructure(assetUrl, assetUrl).then((root) => {
           $assets.addChild(root)
           root.on('loaded', (event) => {
